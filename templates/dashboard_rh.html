@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard RH - Comedor</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-icons.css') }}">
+    
+    
+    <style>
+        body { background-color: #f4f7f6; }
+        .card { border-radius: 1rem; }
+        .table-rounded { border-radius: 0.5rem; overflow: hidden; }
+        /* Pequeños colores para identificar turnos en la tabla */
+        .t1-text { color: #3b82f6; font-weight: bold;} /* Azul */
+        .t2-text { color: #f59e0b; font-weight: bold;} /* Naranja */
+        .t3-text { color: #8b5cf6; font-weight: bold;} /* Morado */
+    </style>
+</head>
+<body>
+    
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4 py-3">
+        <div class="container-fluid px-4">
+            <span class="navbar-brand mb-0 h1 fs-4">
+                <i class="bi bi-pie-chart-fill me-2 text-primary"></i> 
+                Portal de Registros Comedor - Recursos Humanos
+            </span>
+
+            <a href="/logout" class="btn btn-outline-light btn-sm rounded-pill px-3 ms-2">
+                <i class="bi bi-box-arrow-right me-1"></i> Cerrar Sesión
+            </a>
+            <a href="/rh" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-arrow-clockwise"></i> Actualizar Datos
+            </a>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4 pb-4">
+        <div class="row g-4">
+            
+            <div class="col-lg-8">
+                
+                <div class="card shadow-sm border-0 mb-4 p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0 fw-bold text-secondary">
+                            <i class="bi bi-bar-chart-line me-2"></i>Comidas por Turno (Últimos 7 días)
+                        </h5>
+                    </div>
+                    <hr class="text-muted mt-0">
+                    <div style="position: relative; height:40vh; width:100%">
+                        <canvas id="graficaComidas"></canvas>
+                    </div>
+                </div>
+                <div class="card shadow-sm border-0 mb-4 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0 fw-bold text-secondary">
+                    <i class="bi bi-calendar3 me-2 text-success"></i>Tendencia Mensual (Últimos 30 días)
+                </h5>
+            </div>
+            <div style="position: relative; height:250px; width:100%">
+                <canvas id="graficaMensual"></canvas>
+            </div>
+            </div>
+
+                <div class="card shadow-sm border-0 p-4 border-start border-success border-4">
+                    <h5 class="fw-bold text-secondary mb-3">
+                        <i class="bi bi-file-earmark-excel text-success me-2"></i>Exportar Reporte a Excel
+                    </h5>
+                    <form action="/exportar" method="GET" class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small fw-bold">Fecha Inicio:</label>
+                            <input type="date" name="inicio" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small fw-bold">Fecha Fin:</label>
+                            <input type="date" name="fin" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-success w-100 fw-bold shadow-sm">
+                                <i class="bi bi-download me-2"></i>Descargar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 p-4 h-100">
+                    <h5 class="fw-bold text-secondary mb-3">
+                        <i class="bi bi-calendar-check me-2"></i>Resumen por Día
+                    </h5>
+                    <hr class="text-muted mt-0">
+                    
+                    <div class="table-responsive table-rounded border">
+                        <table class="table table-hover mb-0 text-center align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-secondary">Fecha</th>
+                                    <th class="text-secondary">T1</th>
+                                    <th class="text-secondary">T2</th>
+                                    <th class="text-secondary">T3</th>
+                                    <th class="text-secondary">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for fila in estadisticas %}
+                                <tr>
+                                    <td class="text-muted small">{{ fila[0] }}</td>
+                                    <td class="t1-text">{{ fila[2] }}</td>
+                                    <td class="t2-text">{{ fila[3] }}</td>
+                                    <td class="t3-text">{{ fila[4] }}</td>
+                                    <td><span class="badge bg-secondary rounded-pill px-2">{{ fila[1] }}</span></td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                        No hay datos registrados aún.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='chart.js') }}"></script> 
+    <script>
+        // --- GRÁFICA SEMANAL (BARRAS) ---
+        // Usamos | map(attribute=...) y | list | tojson para pasar los datos limpios
+        const etiquetas = {{ estadisticas[::-1] | map(attribute=0) | list | tojson }};
+        const datosT1 = {{ estadisticas[::-1] | map(attribute=2) | list | tojson }};
+        const datosT2 = {{ estadisticas[::-1] | map(attribute=3) | list | tojson }};
+        const datosT3 = {{ estadisticas[::-1] | map(attribute=4) | list | tojson }};
+
+        const ctx = document.getElementById('graficaComidas').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: etiquetas,
+                datasets: [
+                    { label: 'Turno 1', data: datosT1, backgroundColor: '#3b82f6', borderRadius: 4 },
+                    { label: 'Turno 2', data: datosT2, backgroundColor: '#f59e0b', borderRadius: 4 },
+                    { label: 'Turno 3', data: datosT3, backgroundColor: '#8b5cf6', borderRadius: 4 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    x: { stacked: true, grid: { display: false } },
+                    y: { stacked: true, beginAtZero: true, grid: { borderDash: [5, 5] } }
+                }
+            }
+        });
+
+        // --- GRÁFICA MENSUAL (LÍNEA) ---
+        const labelsMes = {{ estadisticas_mes | map(attribute=0) | list | tojson }};
+        const valoresMes = {{ estadisticas_mes | map(attribute=1) | list | tojson }};
+
+        const ctxMes = document.getElementById('graficaMensual').getContext('2d');
+        new Chart(ctxMes, {
+            type: 'line', 
+            data: {
+                labels: labelsMes,
+                datasets: [{
+                    label: 'Consumos Totales',
+                    data: valoresMes,
+                    borderColor: '#198754',
+                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#198754'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

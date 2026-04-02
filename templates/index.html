@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comedor Empresarial - Kiosco</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-icons.css') }}">
+    
+    <style>
+        body { background-color: #e9ecef; height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+        .kiosco-card { max-width: 650px; width: 100%; border-radius: 1.5rem; }
+        #qr_input { font-size: 2.5rem; letter-spacing: 5px; background-color: #f8f9fa; }
+        #qr_input:focus { background-color: #ffffff; border-color: #0d6efd; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); }
+        .logo-empresa { max-height: 120px; object-fit: contain; }
+    </style>
+</head>
+<body onload="document.getElementById('qr_input').focus()">
+    
+    <div class="container px-4">
+        <div class="card shadow-lg p-5 text-center kiosco-card mx-auto border-0">
+            
+            <img src="{{ url_for('static', filename='Logo.png') }}" alt="Logo Empresa" class="logo-empresa mb-4 mx-auto d-block img-fluid" onerror="this.src='https://placehold.co/400x120/ffffff/6c757d?text=LOGO+DE+LA+EMPRESA'">
+
+            <h1 class="mb-2 fw-bold text-dark">Registro de Comedor</h1>
+            <p class="text-muted mb-4 fs-5">Por favor, escanea el código de barras de tu gafete.</p>
+            
+            <form action="/escanear" method="POST" id="form_escaner">
+                <input type="hidden" name="metodo_ingreso" value="escaner">
+                <input type="text" id="qr_input" name="id_employee" 
+                       class="form-control text-center mb-4 shadow-sm" 
+                       placeholder="|||||||||||||||||||" 
+                       autocomplete="off" inputmode="none" autofocus required>
+            </form>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show text-center" role="alert">
+                        <strong>{{ message }}</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                {% endwith %}
+            <hr class="text-muted my-4">
+
+            <button type="button" class="btn btn-outline-secondary btn-lg rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalManual">
+                <i class="bi bi-keyboard me-2"></i>¿No traes gafete? Ingreso Manual
+            </button>
+
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalManual" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 1rem;">
+                <div class="modal-header bg-dark text-white" style="border-radius: 1rem 1rem 0 0;">
+                    <h5 class="modal-title"><i class="bi bi-person-badge me-2"></i>Ingreso Manual</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <p class="mb-3">Teclea tu número de nómina. <strong>Se imprimirá un ticket.</strong></p>
+                    
+                    <form action="/escanear" method="POST">
+                        <input type="hidden" name="metodo_ingreso" value="manual">
+                        <input type="number" id="input_manual" name="id_employee" 
+                               class="form-control form-control-lg text-center mb-4" 
+                               placeholder="Ej: 10025" required autocomplete="off">
+                        
+                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">
+                            <i class="bi bi-printer me-2"></i>Registrar e Imprimir
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
+        <script>
+            const qrInput = document.getElementById('qr_input');
+            const modalManual = document.getElementById('modalManual');
+            const inputManual = document.getElementById('input_manual');
+
+            // 1. Evitar que el teclado físico (si alguien conecta uno) borre el campo, 
+            // pero permitir que el escáner mande el "Enter"
+            qrInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('form_escaner').submit();
+                }
+            });
+
+            // 2. Al abrir el modal manual: QUITAMOS readonly para que puedan escribir
+            modalManual.addEventListener('shown.bs.modal', () => {
+                inputManual.focus();
+            });
+
+            // 3. Al cerrar el modal: Regresamos el foco al escáner
+            modalManual.addEventListener('hidden.bs.modal', () => {
+                qrInput.focus();
+            });
+
+            // 4. Mantener el foco SIEMPRE en el escáner
+            // Si el usuario hace clic en cualquier parte (fuera del modal), el cursor vuelve al escáner
+            document.addEventListener('click', function(e) {
+                if (!modalManual.classList.contains('show')) {
+                    qrInput.focus();
+                }
+            });
+
+            // 5. Truco extra: Algunos escáneres son tan rápidos que el "autofocus" falla al cargar.
+            // Forzamos el foco cada 2 segundos por si se pierde.
+            setInterval(() => {
+                if (!modalManual.classList.contains('show')) {
+                    qrInput.focus();
+                }
+            }, 2000);
+        </script>
+</body>
+</html>
