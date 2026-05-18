@@ -35,7 +35,7 @@ python -m venv .venv
 ```
 *On macOS/Linux:*
 ```bash
-python3 -m venv .venv
+python3.x-.venv
 source .venv/bin/activate
 ```
 
