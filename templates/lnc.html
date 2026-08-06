@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo Cocina - Registro Manual</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-icons.css') }}">
+    
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { border-radius: 1rem; }
+        .btn-xl { padding: 0.8rem 1.5rem; font-size: 1.25rem; border-radius: 0.75rem; }
+        .table-rounded { border-radius: 0.5rem; overflow: hidden; }
+    </style>
+</head>
+<body>
+
+    <!-- NAV BAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-danger shadow-sm mb-4 py-3">
+        <div class="container-fluid px-4">
+            <span class="navbar-brand mb-0 h1 fs-4 fw-bold">
+                <i class="bi bi-egg-fried me-2"></i> Portal Cocina - Registro de Comidas
+            </span>
+            <a href="/lnc" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                <i class="bi bi-arrow-clockwise me-1"></i> Actualizar Pantalla
+            </a>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4 pb-4">
+        
+        <!-- ALERTAS DE MENSAJES (Exito / Error / Duplicado) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm text-center fs-5 fw-bold mb-4" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row g-4">
+            
+            <!-- COLUMNA IZQUIERDA: FORMULARIO DE REGISTRO MANUAL -->
+            <div class="col-lg-5">
+                <div class="card shadow-sm border-0 p-4">
+                    <h4 class="fw-bold text-danger mb-3">
+                        <i class="bi bi-person-plus-fill me-2"></i>Registro Sin Credencial
+                    </h4>
+                    <p class="text-muted small">Ingresa la nómina y quién autoriza la entrega del platillo.</p>
+                    <hr class="mt-0">
+
+                    <form action="/lnc/registrar" method="POST">
+                        <div class="mb-3">
+                            <label for="id_employee" class="form-label fw-bold text-secondary">Número de Nómina:</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light"><i class="bi bi-card-heading"></i></span>
+                                <input type="text" id="id_employee" name="id_employee" class="form-control fw-bold fs-4" placeholder="Ej. 1045" autofocus required>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="autorizo" class="form-label fw-bold text-secondary">¿Quién Autorizó?:</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light"><i class="bi bi-shield-check"></i></span>
+                                <input type="text" id="autorizo" name="autorizo" class="form-control" placeholder="Ej. RH / Sup. Carlos" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger btn-xl w-100 fw-bold shadow-sm">
+                            <i class="bi bi-check-circle-fill me-2"></i>Registrar Comida
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: KPI TOTAL Y ÚLTIMOS MARCAJES -->
+            <div class="col-lg-7">
+                
+                <!-- METRICA TOTAL DEL DÍA -->
+                <div class="card shadow-sm border-0 mb-4 p-3 bg-white border-start border-danger border-5">
+                    <div class="d-flex align-items-center justify-content-between px-2">
+                        <div>
+                            <h6 class="text-muted fw-bold mb-1">TOTAL ENTREGADO HOY</h6>
+                            <h1 class="display-5 fw-bold text-dark mb-0">
+                                <span id="total-hoy">{{ total_hoy }}</span> <span class="fs-4 text-muted">platillos</span>
+                            </h1>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 p-3 rounded-circle text-danger fs-1">
+                            <i class="bi bi-pie-chart-fill"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLA EN VIVO -->
+                <div class="card shadow-sm border-0 p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0 fw-bold text-secondary">
+                            <i class="bi bi-clock-history me-2 text-danger"></i>Últimas Entregas Registradas
+                        </h5>
+                        <span class="badge bg-danger rounded-pill">En Vivo</span>
+                    </div>
+                    <hr class="mt-0">
+
+                    <div class="table-responsive table-rounded border" style="max-height: 380px; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0 text-center">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th class="text-secondary">Hora</th>
+                                    <th class="text-secondary">Nómina</th>
+                                    <th class="text-secondary text-start">Empleado</th>
+                                    <th class="text-secondary">Turno</th>
+                                    <th class="text-secondary">Método</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-registros">
+                                {% for reg in ultimos_registros %}
+                                <tr>
+                                    <td class="text-muted small">{{ reg[0][11:16] }}</td>
+                                    <td class="fw-bold">{{ reg[1] }}</td>
+                                    <td class="text-start">{{ reg[2] }}</td>
+                                    <td>
+                                        {% if reg[3] == 'T1' %}
+                                            <span class="badge bg-primary">T1</span>
+                                        {% elif reg[3] == 'T2' %}
+                                            <span class="badge bg-warning text-dark">T2</span>
+                                        {% else %}
+                                            <span class="badge text-white" style="background-color: #8b5cf6;">T3</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if 'Manual' in reg[4] %}
+                                            <span class="badge bg-secondary">{{ reg[4] }}</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Escáner</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                        Aún no hay entregas registradas hoy.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
+    
+    <!-- SCRIPT DE ACTUALIZACIÓN EN TIEMPO REAL -->
+    <script>
+        async function actualizarCocina() {
+            try {
+                const respuesta = await fetch('/api/lnc/datos');
+                if (!respuesta.ok) return;
+
+                const data = await respuesta.json();
+
+                // 1. Actualizar el total de comidas entregadas hoy
+                document.getElementById('total-hoy').innerText = data.total_hoy;
+
+                // 2. Reconstruir dinámicamente las filas de la tabla
+                const tbody = document.getElementById('tabla-registros');
+                
+                if (data.registros.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                Aún no hay entregas registradas hoy.
+                            </td>
+                        </tr>`;
+                    return;
+                }
+
+                let html = '';
+                data.registros.forEach(reg => {
+                    let badgeTurno = reg.turno === 'T1' 
+                        ? 'bg-primary' 
+                        : (reg.turno === 'T2' ? 'bg-warning text-dark' : 'style="background-color: #8b5cf6;"');
+                    
+                    let badgeMetodo = reg.metodo.includes('Manual') 
+                        ? `<span class="badge bg-secondary">${reg.metodo}</span>` 
+                        : `<span class="badge bg-success">Escáner</span>`;
+
+                    let badgeHtml = reg.turno === 'T3' 
+                        ? `<span class="badge text-white" ${badgeTurno}>${reg.turno}</span>`
+                        : `<span class="badge ${badgeTurno}">${reg.turno}</span>`;
+
+                    html += `
+                        <tr>
+                            <td class="text-muted small">${reg.hora}</td>
+                            <td class="fw-bold">${reg.id}</td>
+                            <td class="text-start">${reg.nombre}</td>
+                            <td>${badgeHtml}</td>
+                            <td>${badgeMetodo}</td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = html;
+            } catch (error) {
+                console.error("Error consultando la API de cocina:", error);
+            }
+        }
+
+        // Consultar la API automáticamente cada 2.5 segundos
+        setInterval(actualizarCocina, 2500);
+    </script>
+</body>
+</html>
