@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pases Temporales - Recursos Humanos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card-header-custom { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; }
+        .badge-activo { background-color: #10b981; color: white; }
+        .badge-usado { background-color: #64748b; color: white; }
+        .badge-expirado { background-color: #ef4444; color: white; }
+        .preview-box { background: #e2e8f0; border-radius: 8px; border: 1px dashed #94a3b8; }
+    </style>
+</head>
+<body class="p-4">
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0 text-primary"><i class="fa-solid fa-ticket"></i> Generador de Pases de Comedor</h2>
+            <p class="text-muted mb-0">Emisión en lote con líneas para firma y nombre a mano (8 pases por hoja Carta).</p>
+        </div>
+        <a href="{{ url_for('dashboard_rh') }}" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Volver a RH
+        </a>
+    </div>
+
+    <!-- Mensajes Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <!-- FORMULARIO DE GENERACIÓN -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header card-header-custom py-3">
+                    <h5 class="card-title mb-0"><i class="fa-solid fa-layer-group"></i> Emitir Lote de Pases</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form action="{{ url_for('generar_pase_rh') }}" method="POST">
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tipo de Pase</label>
+                            <select name="tipo_pase" class="form-select">
+                                <option value="Visitante" selected>Visitante / Externo</option>
+                                <option value="Contratista">Contratista / Proveedor</option>
+                                <option value="Sin Credencial">Empleado Sin Credencial</option>
+                                <option value="Capacitación">Capacitación / Curso</option>
+                                <option value="Auditoría">Auditoría / Inspección</option>
+                                <option value="Especial">Evento Especial</option>
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Cantidad</label>
+                                <input type="number" name="cantidad" id="cantidad" class="form-control" value="8" min="1" max="48" oninput="calcularHojas()">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Vigencia</label>
+                                <select name="dias" class="form-select">
+                                    <option value="1" selected>1 Día (Hoy)</option>
+                                    <option value="3">3 Días</option>
+                                    <option value="7">7 Días</option>
+                                    <option value="15">15 Días</option>
+                                    <option value="30">30 Días</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="p-2 mb-3 preview-box text-center">
+                            <small class="text-secondary fw-bold" id="info-hojas">
+                                <i class="fa-solid fa-print"></i> <b>8</b> pases = <b>1</b> hoja Carta completa
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Autorizado Por</label>
+                            <input type="text" name="autorizo" class="form-control" value="Recursos Humanos">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm">
+                            <i class="fa-solid fa-file-pdf"></i> Generar e Imprimir Pases
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLA DE HISTORIAL -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 text-dark"><i class="fa-solid fa-clock-rotate-left"></i> Historial de Pases Emitidos</h5>
+                    <span class="badge bg-light text-muted border">Últimos generados</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Folio</th>
+                                    <th>Tipo / Beneficiario</th>
+                                    <th>Vence</th>
+                                    <th>Estado</th>
+                                    <th>Autorizó</th>
+                                    <th class="text-center">PDF</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in pases %}
+                                <tr>
+                                    <td><code class="fw-bold text-dark">{{ p[0] }}</code></td>
+                                    <td><strong>{{ p[1] }}</strong></td>
+                                    <td><small>{{ p[3] }}</small></td>
+                                    <td>
+                                        {% if p[4] == 1 %}
+                                            <span class="badge badge-usado"><i class="fa-solid fa-check"></i> Canjeado</span>
+                                            {% if p[5] %}<br><small class="text-muted" style="font-size: 0.72rem;">{{ p[5][11:16] }} hrs</small>{% endif %}
+                                        {% elif hoy > p[3] %}
+                                            <span class="badge badge-expirado"><i class="fa-solid fa-clock"></i> Vencido</span>
+                                        {% else %}
+                                            <span class="badge badge-activo"><i class="fa-solid fa-bolt"></i> Activo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><small class="text-muted">{{ p[6] }}</small></td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('reimprimir_pase_rh', id_pase=p[0]) }}" class="btn btn-sm btn-outline-primary" title="Reimprimir">
+                                            <i class="fa-solid fa-print"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No hay registros de pases temporales.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function calcularHojas() {
+    const cant = parseInt(document.getElementById('cantidad').value) || 1;
+    const hojas = Math.ceil(cant / 8);
+    const label = document.getElementById('info-hojas');
+    label.innerHTML = `<i class="fa-solid fa-print"></i> <b>${cant}</b> pases = <b>${hojas}</b> hoja(s) Carta`;
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

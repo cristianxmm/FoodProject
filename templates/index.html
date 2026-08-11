@@ -27,7 +27,14 @@
         }
         .barcode-icon {
             font-size: 3.5rem;
-            color: #6c757d;
+            color: #003366;
+        }
+        .foto-alerta {
+            width: 140px;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 4px solid #ffffff;
         }
     </style>
 </head>
@@ -41,13 +48,25 @@
             <h1 class="mb-2 fw-bold text-dark">Registro de Comedor</h1>
             <p class="text-muted mb-4 fs-5">Por favor, escanea el código de barras de tu gafete.</p>
             
-            <!-- INDICADOR VISUAL -->
-            <div class="py-3 mb-4 bg-light rounded-4 border">
-                <i class="bi bi-qr-code-scan barcode-icon d-block mb-2 text-danger"></i>
-                <span class="text-muted fw-bold">Esperando lectura de gafete...</span>
+            <!-- INDICADOR VISUAL (ESTADO DE ESPERA) -->
+            <div id="indicador-espera" class="py-3 mb-4 bg-light rounded-4 border">
+                <i class="bi bi-qr-code-scan barcode-icon d-block mb-2"></i>
+                <span class="text-muted fw-bold fs-5">Esperando lectura de gafete...</span>
             </div>
 
-            <!-- CONTENEDOR DINÁMICO DE MENSAJES (Escaner via evdev / API) -->
+            <!-- ALERTAS NATIVAS DE FLASK (Para envíos por formulario web/resguardo) -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm text-center fs-4 fw-bold mb-3 rounded-4 py-3" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- CONTENEDOR DINÁMICO DE MENSAJES Y FOTO (Hardware evdev / API) -->
             <div id="alerta-kiosko"></div>
 
         </div>
@@ -59,40 +78,105 @@
         let ultimoTimestampProcesado = 0;
         let timerOcultar = null;
 
+        // =========================================================
+        // 1. SÍNTESIS DE VOZ (ACTIVO)
+        // =========================================================
+        function hablarMensaje(texto) {
+            if (!('speechSynthesis' in window)) {
+                console.warn("Este navegador no soporta síntesis de voz.");
+                return;
+            }
+
+            // Cancela cualquier locución previa para evitar encimamiento
+            window.speechSynthesis.cancel();
+
+            const locucion = new SpeechSynthesisUtterance(texto);
+            locucion.lang = 'es-MX'; // Español de México (puedes usar 'es-ES' o 'es-US')
+            locucion.rate = 1.0;     // Velocidad de lectura
+            locucion.pitch = 1.0;    // Tono de voz
+
+            // Busca una voz nativa en español
+            const voces = window.speechSynthesis.getVoices();
+            const vozEspanol = voces.find(v => v.lang.startsWith('es'));
+            if (vozEspanol) {
+                locucion.voice = vozEspanol;
+            }
+
+            window.speechSynthesis.speak(locucion);
+        }
+
+        // Carga inicial de voces del sistema
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+
+        // =========================================================
+        // 2. EFECTOS DE SONIDO MP3 (DESACTIVADOS / COMENTADOS)
+        // (Descomenta este bloque si deseas volver a usar archivos .mp3)
+        // =========================================================
+        /*
+        const efectosSonido = {
+            'success': new Audio("{{ url_for('static', filename='audio/success.mp3') }}"),
+            'warning': new Audio("{{ url_for('static', filename='audio/warning.mp3') }}"),
+            'danger':  new Audio("{{ url_for('static', filename='audio/danger.mp3') }}")
+        };
+        */
+
         async function verificarEstadoKiosko() {
             try {
-                const respuesta = await fetch('/api/kiosko/estado');
+                const respuesta = await fetch('/api/kiosko/ultimo_evento');
                 if (!respuesta.ok) return;
 
                 const data = await respuesta.json();
 
-                // Solo mostrar si es un escaneo nuevo (menos de 5 segundos de antigüedad)
-                if (data.timestamp > ultimoTimestampProcesado && (Date.now() / 1000 - data.timestamp) < 5) {
+                // Validar que exista evento nuevo en los últimos 6 segundos
+                if (data.timestamp && data.timestamp > ultimoTimestampProcesado && (Date.now() / 1000 - data.timestamp) < 6) {
                     ultimoTimestampProcesado = data.timestamp;
 
                     const contenedor = document.getElementById('alerta-kiosko');
+                    const indicadorEspera = document.getElementById('indicador-espera');
                     
-                    // Renderizar mensaje de estado según respuesta de evdev
+                    // Ocultar caja de espera mientras se muestra el resultado
+                    if (indicadorEspera) indicadorEspera.classList.add('d-none');
+
+                    // 🔊 VOZ: Leer el mensaje en voz alta (ACTIVO)
+                    if (data.mensaje) {
+                        hablarMensaje(data.mensaje);
+                    }
+
+                    // 🎵 AUDIO MP3: (DESACTIVADO / COMENTADO)
+                    /*
+                    if (efectosSonido[data.tipo]) {
+                        efectosSonido[data.tipo].currentTime = 0;
+                        efectosSonido[data.tipo].play().catch(e => console.warn("Audio bloqueado:", e));
+                    }
+                    */
+
+                    // Renderizar notificación visual con la fotografía del empleado
                     contenedor.innerHTML = `
-                        <div class="alert alert-${data.tipo} text-center fs-4 fw-bold shadow-sm mb-0 rounded-4 py-3" role="alert">
-                            ${data.mensaje}
+                        <div class="alert alert-${data.tipo} text-center shadow-lg mb-0 rounded-4 py-4" role="alert">
+                            <img src="${data.foto}?t=${Date.now()}" alt="Foto Empleado" class="foto-alerta shadow-sm mb-3 mx-auto d-block">
+                            <div class="fs-3 fw-bold">${data.mensaje}</div>
                         </div>
                     `;
 
-                    // Si escanean rápido, reiniciar el contador para ocultar
+                    // Reiniciar temporizador si se escanean varios gafetes seguidos
                     if (timerOcultar) clearTimeout(timerOcultar);
 
-                    // Ocultar mensaje automáticamente a los 3.5 segundos
+                    // Restaurar estado de espera tras 4 segundos
                     timerOcultar = setTimeout(() => {
                         contenedor.innerHTML = '';
-                    }, 3500);
+                        if (indicadorEspera) indicadorEspera.classList.remove('d-none');
+                    }, 4000);
                 }
             } catch (error) {
-                console.error("Error consultando el estado del kiosco:", error);
+                console.error("Error consultando evento del kiosco:", error);
             }
         }
 
-        // Consultar cada 400ms para actualización inmediata tras el escaneo por hardware
+        // Consulta inmediata cada 400ms
         setInterval(verificarEstadoKiosko, 400);
     </script>
 </body>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recursos Humanos - Menú Principal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-icons.css') }}">
+    <style>
+        :root { --optibelt-blue: #003366; }
+        body { background-color: #f4f6f9; }
+        .bg-optibelt { background-color: var(--optibelt-blue) !important; }
+        .card-option {
+            border: none;
+            border-radius: 1rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+        .card-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.12) !important;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark bg-optibelt shadow-sm py-3 mb-5">
+        <div class="container px-4 d-flex justify-content-between align-items-center">
+            <span class="navbar-brand mb-0 h1 fs-4 fw-bold">
+                <i class="bi bi-shield-lock-fill me-2"></i> Portal RH - Comedor Optibelt
+            </span>
+            <a href="/logout" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                <i class="bi bi-box-arrow-right me-1"></i> Cerrar Sesión
+            </a>
+        </div>
+    </nav>
+
+    <div class="container px-4 py-3">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold text-dark">Bienvenido al Panel de Gestión</h2>
+            <p class="text-muted fs-5">Selecciona el módulo al que deseas acceder:</p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            <!-- OPCIÓN 1: DASHBOARD DE ESTADÍSTICAS -->
+            <div class="col-lg-4 col-md-6">
+                <a href="/rh/dashboard" class="card card-option shadow-sm p-4 h-100 bg-white">
+                    <div class="card-body text-center py-4">
+                        <div class="p-4 rounded-circle bg-light text-primary d-inline-block mb-3 fs-1">
+                            <i class="bi bi-bar-chart-line-fill"></i>
+                        </div>
+                        <h3 class="fw-bold text-dark">Dashboard y Reportes</h3>
+                        <p class="text-muted mb-0">Consulta métricas por turnos, tendencias mensuales y exporta reportes a Excel.</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- OPCIÓN 2: AUTORIZACIONES MANUALES -->
+            <div class="col-lg-4 col-md-6">
+                <a href="/rh/autorizaciones" class="card card-option shadow-sm p-4 h-100 bg-white">
+                    <div class="card-body text-center py-4">
+                        <div class="p-4 rounded-circle bg-light text-success d-inline-block mb-3 fs-1">
+                            <i class="bi bi-person-check-fill"></i>
+                        </div>
+                        <h3 class="fw-bold text-dark">Pases Sin Credencial</h3>
+                        <p class="text-muted mb-0">Autoriza el acceso a comedor a personal que olvidó o extravió su gafete.</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- OPCIÓN 3: PASES TEMPORALES / VALES -->
+            <div class="col-lg-4 col-md-6">
+                <a href="{{ url_for('rh_pases') }}" class="card card-option shadow-sm p-4 h-100 bg-white">
+                    <div class="card-body text-center py-4">
+                        <div class="p-4 rounded-circle bg-light text-warning d-inline-block mb-3 fs-1">
+                            <i class="bi bi-ticket-perforated-fill"></i>
+                        </div>
+                        <h3 class="fw-bold text-dark">Pases Temporales</h3>
+                        <p class="text-muted mb-0">Emisión de vales de comida con código de barras para visitas, externos o permisos.</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

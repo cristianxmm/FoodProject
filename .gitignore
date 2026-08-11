@@ -1,7 +1,35 @@
+# Entorno virtual
+venv/
 .venv/
+env/
+
+# Secretos y credenciales
 .env
-__pycache__/
-*.png
-*.jpg
-*.xlsx
+*.env
+
+# Base de datos SQLite y proyecto DB Browser
 *.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqbpro
+comedor.db
+
+# Reportes y archivos generados
+reporte_*.xlsx
+*.xlsx
+*.pdf
+
+# Cache de Python
+__pycache__/
+*.py[cod]
+
+# IDEs y sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+*.mp3
+*.jpg

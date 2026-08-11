@@ -2,11 +2,22 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Sistema Comedor</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
     <style>
-        body { background: #f4f7f6; height: 100vh; display: flex; align-items: center; }
-        .card-login { width: 400px; border: none; border-radius: 1rem; }
+        body { 
+            background: #f4f7f6; 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+        }
+        .card-login { 
+            width: 100%; 
+            max-width: 400px; 
+            border: none; 
+            border-radius: 1rem; 
+        }
     </style>
 </head>
 <body>
@@ -18,20 +29,36 @@
                     <p class="text-muted small">Ingresa tus credenciales para continuar</p>
                 </div>
                 
+                <!-- Soporte para mensajes de Flask (Logout, etc.) -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category if category != 'message' else 'info' }} small py-2 mb-3">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Mensaje de error por mal usuario/contraseña -->
                 {% if error %}
-                <div class="alert alert-danger small py-2">{{ error }}</div>
+                    <div class="alert alert-danger small py-2 mb-3">{{ error }}</div>
                 {% endif %}
 
-                <form method="POST">
+                <form method="POST" action="{{ url_for('login') }}">
                     <div class="mb-3">
-                        <label class="form-label small fw-bold">Usuario</label>
-                        <input type="text" name="username" class="form-control" required autofocus>
+                        <label for="username" class="form-label small fw-bold">Usuario</label>
+                        <input type="text" id="username" name="username" class="form-control" autocomplete="username" required autofocus>
                     </div>
                     <div class="mb-4">
-                        <label class="form-label small fw-bold">Contraseña</label>
-                        <input type="password" name="password" class="form-control" required>
+                        <label for="password" class="form-label small fw-bold">Contraseña</label>
+                        <input type="password" id="password" name="password" class="form-control" autocomplete="current-password" required>
                     </div>
-                    <button type="submit" class="btn btn-dark w-100 fw-bold py-2">Entrar al Panel</button>
+                    <button type="submit" class="btn btn-dark w-100 fw-bold py-2 mb-3">Entrar al Panel</button>
+                    
+                    <div class="text-center">
+                        <a href="{{ url_for('index') }}" class="text-decoration-none small text-muted">← Volver al Kiosco</a>
+                    </div>
                 </form>
             </div>
         </div>
