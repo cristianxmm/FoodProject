@@ -10,7 +10,7 @@ from io import BytesIO
 import pandas as pd
 from dotenv import load_dotenv
 from evdev import InputDevice, categorize, ecodes
-from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash, jsonify, Response
 
 # Librerías para PDF y Código de Barras
 from reportlab.lib.pagesizes import letter
@@ -21,6 +21,8 @@ from reportlab.graphics.barcode import code128
 
 import random
 import string
+import asyncio
+import edge_tts
 
 load_dotenv()
 
@@ -284,7 +286,23 @@ def escanear():
         return redirect(url_for('index'))
     finally:
         conexion.close()
+async def sintetizar_voz_neural(texto: str, voz: str = "es-MX-DaliaNeural") -> bytes:
+    comunicador = edge_tts.Communicate(texto, voz, rate="+0%", pitch="+0Hz")
+    buffer = bytearray()
+    async for fragmento in comunicador.stream():
+        if fragmento["type"] == "audio":
+            buffer.extend(fragmento["data"])
+    return bytes(buffer)
 
+@app.route('/api/tts')
+def api_tts():
+    texto = request.args.get('texto', 'Buen provecho')
+    try:
+        audio_bytes = asyncio.run(sintetizar_voz_neural(texto))
+        return Response(audio_bytes, mimetype="audio/mpeg")
+    except Exception as e:
+        print(f"Error generando TTS neural: {e}")
+        return ("Error TTS", 500)
 # =========================================================
 # RUTAS DE RECURSOS HUMANOS (/rh)
 # =========================================================

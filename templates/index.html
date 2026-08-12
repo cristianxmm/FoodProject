@@ -71,113 +71,153 @@
 
         </div>
     </div>
+<script>
+    let ultimoTimestampProcesado = 0;
+    let timerOcultar = null;
+    let vocesDisponibles = [];
 
-    <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
-    
-    <script>
-        let ultimoTimestampProcesado = 0;
-        let timerOcultar = null;
-
-        // =========================================================
-        // 1. SÍNTESIS DE VOZ (ACTIVO)
-        // =========================================================
-        function hablarMensaje(texto) {
-            if (!('speechSynthesis' in window)) {
-                console.warn("Este navegador no soporta síntesis de voz.");
-                return;
-            }
-
-            // Cancela cualquier locución previa para evitar encimamiento
-            window.speechSynthesis.cancel();
-
-            const locucion = new SpeechSynthesisUtterance(texto);
-            locucion.lang = 'es-MX'; // Español de México (puedes usar 'es-ES' o 'es-US')
-            locucion.rate = 1.0;     // Velocidad de lectura
-            locucion.pitch = 1.0;    // Tono de voz
-
-            // Busca una voz nativa en español
-            const voces = window.speechSynthesis.getVoices();
-            const vozEspanol = voces.find(v => v.lang.startsWith('es'));
-            if (vozEspanol) {
-                locucion.voice = vozEspanol;
-            }
-
-            window.speechSynthesis.speak(locucion);
-        }
-
-        // Carga inicial de voces del sistema
+    // =========================================================
+    // 1. CARGA Y SELECCIÓN DE VOZ NATURAL
+    // =========================================================
+    function cargarVoces() {
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.onvoiceschanged = () => {
-                window.speechSynthesis.getVoices();
-            };
+            vocesDisponibles = window.speechSynthesis.getVoices();
         }
+    }
 
-        // =========================================================
-        // 2. EFECTOS DE SONIDO MP3 (DESACTIVADOS / COMENTADOS)
-        // (Descomenta este bloque si deseas volver a usar archivos .mp3)
-        // =========================================================
-        /*
-        const efectosSonido = {
-            'success': new Audio("{{ url_for('static', filename='audio/success.mp3') }}"),
-            'warning': new Audio("{{ url_for('static', filename='audio/warning.mp3') }}"),
-            'danger':  new Audio("{{ url_for('static', filename='audio/danger.mp3') }}")
-        };
-        */
+    if ('speechSynthesis' in window) {
+        cargarVoces();
+        window.speechSynthesis.onvoiceschanged = cargarVoces;
+    }
 
-        async function verificarEstadoKiosko() {
-            try {
-                const respuesta = await fetch('/api/kiosko/ultimo_evento');
-                if (!respuesta.ok) return;
+    function seleccionarMejorVozEspanol() {
+    if (!vocesDisponibles || vocesDisponibles.length === 0) {
+        cargarVoces();
+    }
 
-                const data = await respuesta.json();
+    const vocesEs = vocesDisponibles.filter(v => v.lang && v.lang.toLowerCase().startsWith('es'));
+    if (vocesEs.length === 0) return null;
 
-                // Validar que exista evento nuevo en los últimos 6 segundos
-                if (data.timestamp && data.timestamp > ultimoTimestampProcesado && (Date.now() / 1000 - data.timestamp) < 6) {
-                    ultimoTimestampProcesado = data.timestamp;
+    // Lista negra de variantes robóticas y distorsionadas de Linux / Firefox
+    const nombresExcluidos = [
+        "universalrobot", "robosoft", "klatt", "croak", "demonic", 
+        "whisper", "fast_test", "grandpa", "storm"
+    ];
 
-                    const contenedor = document.getElementById('alerta-kiosko');
-                    const indicadorEspera = document.getElementById('indicador-espera');
-                    
-                    // Ocultar caja de espera mientras se muestra el resultado
-                    if (indicadorEspera) indicadorEspera.classList.add('d-none');
+    // Filtra únicamente voces limpias
+    const vocesLimpias = vocesEs.filter(v => {
+        const nombreMin = v.name.toLowerCase();
+        return !nombresExcluidos.some(excluido => nombreMin.includes(excluido));
+    });
 
-                    // 🔊 VOZ: Leer el mensaje en voz alta (ACTIVO)
-                    if (data.mensaje) {
-                        hablarMensaje(data.mensaje);
-                    }
+    // Lista ordenada de preferencia de tus voces instaladas
+    const ordenPreferido = [
+        "Belinda",   // Español Latinoamericano (Femenina clara)
+        "Miguel",    // Español Latinoamericano (Masculina natural)
+        "Linda",     // Español Latinoamericano (Femenina)
+        "Marcelo",   // Español Latinoamericano (Masculina)
+        "Annie",     // Español Latinoamericano (Femenina)
+        "Hugo",      // Español Latinoamericano (Masculina)
+        "Andrea",    // Español España (Femenina)
+        "Pablo",     // Español España (Masculina)
+        "Antonio"    // Español España (Masculina)
+    ];
 
-                    // 🎵 AUDIO MP3: (DESACTIVADO / COMENTADO)
-                    /*
-                    if (efectosSonido[data.tipo]) {
-                        efectosSonido[data.tipo].currentTime = 0;
-                        efectosSonido[data.tipo].play().catch(e => console.warn("Audio bloqueado:", e));
-                    }
-                    */
+    // 1. Buscar según la lista de preferencia
+    for (const nombre of ordenPreferido) {
+        const coincidencia = vocesLimpias.find(v => v.name.includes(nombre));
+        if (coincidencia) return coincidencia;
+    }
 
-                    // Renderizar notificación visual con la fotografía del empleado
-                    contenedor.innerHTML = `
-                        <div class="alert alert-${data.tipo} text-center shadow-lg mb-0 rounded-4 py-4" role="alert">
-                            <img src="${data.foto}?t=${Date.now()}" alt="Foto Empleado" class="foto-alerta shadow-sm mb-3 mx-auto d-block">
-                            <div class="fs-3 fw-bold">${data.mensaje}</div>
-                        </div>
-                    `;
+    // 2. Si no encuentra ninguna de las preferidas, toma la primera limpia
+    if (vocesLimpias.length > 0) return vocesLimpias[0];
 
-                    // Reiniciar temporizador si se escanean varios gafetes seguidos
-                    if (timerOcultar) clearTimeout(timerOcultar);
+    // Fallback final
+    return vocesEs[0];
+}
 
-                    // Restaurar estado de espera tras 4 segundos
-                    timerOcultar = setTimeout(() => {
-                        contenedor.innerHTML = '';
-                        if (indicadorEspera) indicadorEspera.classList.remove('d-none');
-                    }, 4000);
+let reproductorVoz = new Audio();
+
+function hablarMensaje(texto) {
+    if (!texto) return;
+    
+    // Detiene el audio anterior si está reproduciéndose
+    reproductorVoz.pause();
+    reproductorVoz.currentTime = 0;
+    
+    // Carga el audio neural generado por el servidor
+    reproductorVoz.src = `/api/tts?texto=${encodeURIComponent(texto)}`;
+    reproductorVoz.play().catch(e => console.warn("Error reproduciendo voz neural:", e));
+}
+
+    // =========================================================
+    // 2. EFECTOS DE SONIDO MP3 (OPCIONAL / COMENTADO)
+    // =========================================================
+    /*
+    const efectosSonido = {
+        'success': new Audio("{{ url_for('static', filename='audio/success.mp3') }}"),
+        'warning': new Audio("{{ url_for('static', filename='audio/warning.mp3') }}"),
+        'danger':  new Audio("{{ url_for('static', filename='audio/danger.mp3') }}")
+    };
+    */
+
+    // =========================================================
+    // 3. CONSULTA Y PROCESAMIENTO DE EVENTOS EN TIEMPO REAL
+    // =========================================================
+    async function verificarEstadoKiosko() {
+        try {
+            const respuesta = await fetch('/api/kiosko/ultimo_evento');
+            if (!respuesta.ok) return;
+
+            const data = await respuesta.json();
+
+            // Validar que exista evento nuevo generado en los últimos 6 segundos
+            if (data.timestamp && data.timestamp > ultimoTimestampProcesado && (Date.now() / 1000 - data.timestamp) < 6) {
+                ultimoTimestampProcesado = data.timestamp;
+
+                const contenedor = document.getElementById('alerta-kiosko');
+                const indicadorEspera = document.getElementById('indicador-espera');
+                
+                // Ocultar caja de espera mientras se muestra el resultado
+                if (indicadorEspera) indicadorEspera.classList.add('d-none');
+
+                // 🔊 Reproducción de voz
+                if (data.mensaje) {
+                    hablarMensaje(data.mensaje);
                 }
-            } catch (error) {
-                console.error("Error consultando evento del kiosco:", error);
-            }
-        }
 
-        // Consulta inmediata cada 400ms
-        setInterval(verificarEstadoKiosko, 400);
-    </script>
+                // 🎵 Audio MP3 secundario (si se llega a descomentar)
+                /*
+                if (efectosSonido[data.tipo]) {
+                    efectosSonido[data.tipo].currentTime = 0;
+                    efectosSonido[data.tipo].play().catch(e => console.warn("Audio bloqueado:", e));
+                }
+                */
+
+                // Renderizar notificación visual con la fotografía del empleado
+                contenedor.innerHTML = `
+                    <div class="alert alert-${data.tipo} text-center shadow-lg mb-0 rounded-4 py-4" role="alert">
+                        <img src="${data.foto}?t=${Date.now()}" alt="Foto Empleado" class="foto-alerta shadow-sm mb-3 mx-auto d-block">
+                        <div class="fs-3 fw-bold">${data.mensaje}</div>
+                    </div>
+                `;
+
+                // Reiniciar temporizador si se escanean varios gafetes en secuencia
+                if (timerOcultar) clearTimeout(timerOcultar);
+
+                // Restaurar estado de espera tras 4 segundos
+                timerOcultar = setTimeout(() => {
+                    contenedor.innerHTML = '';
+                    if (indicadorEspera) indicadorEspera.classList.remove('d-none');
+                }, 4000);
+            }
+        } catch (error) {
+            console.error("Error consultando evento del kiosco:", error);
+        }
+    }
+
+    // Consulta periódica al endpoint cada 400 ms
+    setInterval(verificarEstadoKiosko, 400);
+</script>
 </body>
 </html>
