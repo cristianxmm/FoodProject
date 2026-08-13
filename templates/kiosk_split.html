@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiosco Comedor - Vista Dividida</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body, html {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #000;
+        }
+        .split-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+        .split-frame {
+            border: none;
+            height: 100%;
+        }
+        /* Lado Izquierdo: Escaneo (50% del ancho) */
+        .left-frame {
+            width: 50%;
+            border-right: 3px solid #1a252f;
+        }
+        /* Lado Derecho: Dashboard Cocina (50% del ancho) */
+        .right-frame {
+            width: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="split-container">
+        <!-- Lado Izquierdo: Registro de Escaneo -->
+        <iframe src="/" class="split-frame left-frame"></iframe>
+        
+        <!-- Lado Derecho: Pantalla de Cocina / LNC -->
+        <iframe src="/lnc" class="split-frame right-frame"></iframe>
+    </div>
+</body>
+</html>

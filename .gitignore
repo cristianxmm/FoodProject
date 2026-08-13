@@ -14,7 +14,7 @@ env/
 *.sqlite
 *.sqlite3
 *.sqbpro
-comedor.db/n
+comedor.db\n
 
 # Reportes y archivos generados
 reporte_*.xlsx

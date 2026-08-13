@@ -232,6 +232,9 @@ def logout():
 def index():
     total, consumos = obtener_datos_hoy()
     return render_template('index.html', consumos=consumos, total_hoy=total)
+@app.route('/kiosk_split')
+def kiosk_split():
+    return render_template('kiosk_split.html')
 
 @app.route('/escanear', methods=['POST'])
 def escanear():
