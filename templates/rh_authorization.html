@@ -40,6 +40,9 @@
                 <i class="bi bi-shield-lock-fill me-2"></i> Recursos Humanos - Autorización de Comedor
             </span>
             <a href="/rh" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i> Regresar
+            </a>
+            <a href="/rh/authorization" class="btn btn-outline-light btn-sm rounded-pill px-3">
                 <i class="bi bi-arrow-clockwise me-1"></i> Recargar
             </a>
         </div>
@@ -70,7 +73,7 @@
                     <p class="text-muted small">Registra al personal que olvido o extravió su gafete.</p>
                     <hr class="mt-0">
 
-                    <form action="/rh/autorizar" method="POST">
+                    <form action="{{ url_for('rh.authorization') }}" method="POST">
                         <div class="mb-3">
                             <label for="id_employee" class="form-label fw-bold text-secondary">Número de Nómina:</label>
                             <div class="input-group input-group-lg">

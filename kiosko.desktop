@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Kiosco Comedor
+Exec=/bin/bash -c "sleep 2 && $HOME/HestiaFood/FoodProject/iniciar_kiosco.sh"
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true

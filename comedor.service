@@ -1,0 +1,15 @@
+[Unit]
+Description=Servidor Kiosco Comedor
+After=network.target
+
+[Service]
+Type=simple
+User=%u
+WorkingDirectory=%h/HestiaFood/FoodProject
+Environment="PATH=%h/HestiaFood/FoodProject/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
+ExecStart=%h/HestiaFood/FoodProject/venv/bin/python app.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

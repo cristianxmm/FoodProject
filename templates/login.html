@@ -45,7 +45,7 @@
                     <div class="alert alert-danger small py-2 mb-3">{{ error }}</div>
                 {% endif %}
 
-                <form method="POST" action="{{ url_for('login') }}">
+                <form method="POST" action="{{ url_for('rh.login') }}">
                     <div class="mb-3">
                         <label for="username" class="form-label small fw-bold">Usuario</label>
                         <input type="text" id="username" name="username" class="form-control" autocomplete="username" required autofocus>
@@ -57,7 +57,7 @@
                     <button type="submit" class="btn btn-dark w-100 fw-bold py-2 mb-3">Entrar al Panel</button>
                     
                     <div class="text-center">
-                        <a href="{{ url_for('index') }}" class="text-decoration-none small text-muted">← Volver al Kiosco</a>
+                        <a href="{{ url_for('main.index') }}" class="text-decoration-none small text-muted">← Volver al Kiosco</a>
                     </div>
                 </form>
             </div>

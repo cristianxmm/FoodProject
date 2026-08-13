@@ -22,7 +22,7 @@
             <h2 class="mb-0 text-primary"><i class="fa-solid fa-ticket"></i> Generador de Pases de Comedor</h2>
             <p class="text-muted mb-0">Emisión en lote con líneas para firma y nombre a mano (8 pases por hoja Carta).</p>
         </div>
-        <a href="{{ url_for('dashboard_rh') }}" class="btn btn-outline-secondary">
+        <a href="{{ url_for('rh.menu_rh') }}" class="btn btn-outline-secondary">
             <i class="fa-solid fa-arrow-left"></i> Volver a RH
         </a>
     </div>
@@ -47,7 +47,7 @@
                     <h5 class="card-title mb-0"><i class="fa-solid fa-layer-group"></i> Emitir Lote de Pases</h5>
                 </div>
                 <div class="card-body p-4">
-                    <form action="{{ url_for('generar_pase_rh') }}" method="POST">
+                    <form action="{{ url_for('rh.generar_pase_rh') }}" method="POST">
                         
                         <div class="mb-3">
                             <label class="form-label fw-bold">Tipo de Pase</label>
@@ -135,7 +135,7 @@
                                     </td>
                                     <td><small class="text-muted">{{ p[6] }}</small></td>
                                         <td class="text-center">
-                                            <a href="{{ url_for('reimprimir_pase_rh', id_pase=p[0]) }}" 
+                                            <a href="{{ url_for('rh.reimprimir_pase_rh', id_pase=p[0]) }}" 
                                                 class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 shadow-sm px-2 py-1" 
                                                 title="Descargar / Imprimir PDF">
                                                     <!-- Icono de Impresora SVG nativo (no requiere internet) -->
