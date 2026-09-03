@@ -93,7 +93,7 @@ def procesar_codigo_escaneado(id_escaneado):
             msg = f"¡{empleado[0]}, ya registraste tu comida!" if limite_max == 1 else f"¡{empleado[0]}, alcanzaste el límite de {limite_max} comidas este turno!"
             ultimo_evento_kiosko.update({
                 "timestamp": time_lib.time(),
-                "tipo": "warning",
+                "tipo": "danger",
                 "mensaje": msg,
                 "nombre": empleado[0],
                 "foto": foto_empleado
