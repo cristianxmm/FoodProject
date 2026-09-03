@@ -3,8 +3,10 @@ import glob
 import threading
 import time as time_lib
 from datetime import datetime
-from evdev import InputDevice, categorize, ecodes
-
+try:
+    from evdev import InputDevice, categorize, ecodes
+except ImportError:
+    print("evdev no disponible en este sistema")
 from database import (
     obtener_conexion, 
     procesar_pase_temporal, 
