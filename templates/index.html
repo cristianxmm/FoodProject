@@ -151,15 +151,14 @@ function hablarMensaje(texto) {
 }
 
     // =========================================================
-    // 2. EFECTOS DE SONIDO MP3 (OPCIONAL / COMENTADO)
+    // 2. EFECTOS DE SONIDO MP3 
     // =========================================================
-    /*
+
     const efectosSonido = {
         'success': new Audio("{{ url_for('static', filename='audio/success.mp3') }}"),
-        'warning': new Audio("{{ url_for('static', filename='audio/warning.mp3') }}"),
         'danger':  new Audio("{{ url_for('static', filename='audio/danger.mp3') }}")
     };
-    */
+
 
     // =========================================================
     // 3. CONSULTA Y PROCESAMIENTO DE EVENTOS EN TIEMPO REAL
@@ -186,14 +185,13 @@ function hablarMensaje(texto) {
                     hablarMensaje(data.mensaje);
                 }
 
-                // 🎵 Audio MP3 secundario (si se llega a descomentar)
-                /*
+                // Audio MP3 secundario 
+           
                 if (efectosSonido[data.tipo]) {
                     efectosSonido[data.tipo].currentTime = 0;
                     efectosSonido[data.tipo].play().catch(e => console.warn("Audio bloqueado:", e));
                 }
-                */
-
+         
                 // Renderizar notificación visual con la fotografía del empleado
                 contenedor.innerHTML = `
                     <div class="alert alert-${data.tipo} text-center shadow-lg mb-0 rounded-4 py-4" role="alert">
