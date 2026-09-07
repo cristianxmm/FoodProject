@@ -2,6 +2,7 @@
 import asyncio
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, Response
+from scanner import procesar_codigo_escaneado
 
 from database import (
     obtener_datos_hoy, 
@@ -89,3 +90,11 @@ def api_tts():
 @main_bp.route('/api/kiosko/ultimo_evento')
 def api_ultimo_evento():
     return jsonify(ultimo_evento_kiosko)
+
+@main_bp.route('/simular/<codigo>')
+def simular_escaneo(codigo):
+    procesar_codigo_escaneado(codigo)
+    return jsonify({
+        "ok": True,
+        "codigo": codigo
+    })

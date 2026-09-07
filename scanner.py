@@ -3,8 +3,10 @@ import glob
 import threading
 import time as time_lib
 from datetime import datetime
-from evdev import InputDevice, categorize, ecodes
-
+try:
+    from evdev import InputDevice, categorize, ecodes
+except ImportError:
+    print("evdev no disponible en este sistema")
 from database import (
     obtener_conexion, 
     procesar_pase_temporal, 
@@ -91,7 +93,7 @@ def procesar_codigo_escaneado(id_escaneado):
             msg = f"¡{empleado[0]}, ya registraste tu comida!" if limite_max == 1 else f"¡{empleado[0]}, alcanzaste el límite de {limite_max} comidas este turno!"
             ultimo_evento_kiosko.update({
                 "timestamp": time_lib.time(),
-                "tipo": "warning",
+                "tipo": "danger",
                 "mensaje": msg,
                 "nombre": empleado[0],
                 "foto": foto_empleado
