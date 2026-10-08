@@ -40,7 +40,7 @@ def escanear():
         if es_pase:
             if resultado == "OK":
                 conexion.commit()
-                flash(f"¡Éxito! Pase canjeado. Buen provecho, {nombre_beneficiario}.", "success")
+                flash(f"Buen provecho, {nombre_beneficiario.split()[0]}", "success")
             else:
                 flash(f"Pase Inválido: {resultado}", "danger")
             return redirect(url_for('main.index'))
@@ -52,7 +52,7 @@ def escanear():
             flash(f"Error: Gafete {id_escaneado} no registrado.", "danger")
             return redirect(url_for('main.index'))
 
-        nombre = empleado[0]
+        nombre = empleado[0].split()[0]
         inicio_turno, fin_turno, nombre_turno = obtener_ventana_turno()
         inicio_str = inicio_turno.strftime('%Y-%m-%d %H:%M:%S')
         fin_str = fin_turno.strftime('%Y-%m-%d %H:%M:%S')
@@ -69,9 +69,9 @@ def escanear():
         conexion.commit()
 
         if metodo_ingreso == 'manual':
-            flash(f"¡Éxito! {nombre} registrado manualmente ({consumos_act + 1}/{limite_max}).", "success")
+            flash(f"¡Éxito! {nombre} registrado manualmente.", "success")
         else:
-            flash(f"¡Éxito! Buen provecho, {nombre} ({consumos_act + 1}/{limite_max}).", "success")
+            flash(f"Buen provecho, {nombre}", "success")
             
         return redirect(url_for('main.index'))
     finally:

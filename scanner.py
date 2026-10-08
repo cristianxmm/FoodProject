@@ -54,7 +54,7 @@ def procesar_codigo_escaneado(id_escaneado):
                 ultimo_evento_kiosko.update({
                     "timestamp": time_lib.time(),
                     "tipo": "success",
-                    "mensaje": f"¡Pase Válido! Buen provecho, {nombre_beneficiario}",
+                    "mensaje": f"Buen provecho, {nombre_beneficiario.split()[0]}",
                     "nombre": nombre_beneficiario,
                     "foto": "/static/fotos/default.jpg"
                 })
@@ -107,7 +107,7 @@ def procesar_codigo_escaneado(id_escaneado):
         ultimo_evento_kiosko.update({
             "timestamp": time_lib.time(),
             "tipo": "success",
-            "mensaje": f"Buen provecho, {empleado[0]} ({consumos_act + 1}/{limite_max})",
+            "mensaje": f"Buen provecho, {empleado[0].split()[0]}",
             "nombre": empleado[0],
             "foto": foto_empleado
         })

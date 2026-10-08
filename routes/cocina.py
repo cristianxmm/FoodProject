@@ -83,7 +83,7 @@ def registrar_cocina():
             flash(f"Error: La nómina {id_escaneado} no está registrada en el sistema.", "danger")
             return redirect(url_for('cocina.panel_cocina'))
 
-        nombre = empleado[0]
+        nombre = empleado[0].split()[0]
         inicio_turno, fin_turno, nombre_turno = obtener_ventana_turno()
         inicio_str = inicio_turno.strftime('%Y-%m-%d %H:%M:%S')
         fin_str = fin_turno.strftime('%Y-%m-%d %H:%M:%S')
@@ -98,7 +98,7 @@ def registrar_cocina():
         cursor.execute("INSERT INTO Consumos (id_employee, date_hour, Metodo) VALUES (?, ?, ?)", 
                        (id_escaneado, fecha_hora_exacta, metodo))
         conexion.commit()
-        flash(f"¡Éxito! Comida registrada para {nombre} ({consumos_act + 1}/{limite_max}).", "success")
+        flash(f"¡Éxito! Comida registrada para {nombre}.", "success")
         return redirect(url_for('cocina.panel_cocina'))
     finally:
         conexion.close()
